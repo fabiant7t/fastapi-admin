@@ -3,7 +3,29 @@ services:
   app:
     build: .
     restart: always
-    env_file: .env
-    network_mode: host
+    environment:
+      - DATABASE_URL=mysql://user:topsecret@db:3306/fastapi-admin
+      - REDIS_URL=redis://redis:6379/0
     image: fastapi-admin
-    command: uvicorn examples.main:app_ --port 8000 --host 0.0.0.0
+    command: |
+      /bin/sh -c "
+        sleep 10
+        uvicorn examples.main:app_ \
+          --port 8000 \
+          --host 0.0.0.0
+      "
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: topsecret
+      MYSQL_DATABASE: fastapi-admin
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+  redis:
+    image: redis
